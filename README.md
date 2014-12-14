@@ -2,15 +2,23 @@
 
 GoFormKeeper provides you a easy way to validate form parameters in Golang.
 
-# Dependency
+## Installation
+
+go get github.com/lyokato/goformkeeper
+
+## Dependency
 
 This library depends on "gopkg.in/yaml.v1"
 
 ## TODO
 
 ADDS MORE TEST
+Translation to English
 
-### Getting Started
+## Getting Started
+
+あなたのWebアプリケーションに次のようなformがあり、
+このformに対するユーザーの入力をチェックしたいとします。
 
 ```html
 <form action="/signin" method="POST">
@@ -20,7 +28,13 @@ ADDS MORE TEST
 </form>
 ```
 
-Create 'rules.yml'
+次のように、ruleを定義したYAMLファイルを用意します。
+
+下の例では、ルールのセットに'signin'という名前を付けて、
+'fields'以下に、各フィールドのvalidationのルールを定義してあるのが
+なんとなく分かるでしょうか。
+
+ルールの定義の仕方について、詳しくは後で説明します。
 
 ```yaml
 forms:
@@ -46,15 +60,10 @@ forms:
             to: 20
 ```
 
-Load rule file with goformkeeper.LoadRuleFromFile(filePath)
-or you can loadd multiple rule files once with goformkeeper.LoadRuleFromDir(dirPath)
-Then you can get goformkeeper.Rule object.
+Webアプリケーションは、このように用意されたルールファイルを読み込み、
+HTTP Requestをチェックします。
 
-Next, you should call rule.Validate(ruleName, request).
-It returns formkeeper.Result object.
-
-
-Simple example with martini and pongo2
+以下はMartiniとPongo2を使った簡単なサンプルです。
 
 ```go
 package main
@@ -80,6 +89,7 @@ func main() {
     return
   }
 
+  // Display Input Form
   m.Get("/", func(res http.ResponseWriter, req *http.Request, render render.Render) {
 
     tpl, err := pongo2.FromFile("templates/index.html")
@@ -118,6 +128,24 @@ func main() {
 
 ```
 
+まず冒頭部分で事前に定義されたルールファイルを読み込んでいます。
+```
+rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
+```
+
+次に、Postメソッドに注目して下さい。
+```
+results, err := rule.Validate("signin", req)
+if results.HasFailure() {
+  // show form page again, with error messages
+}
+```
+
+ルールファイルの中で定義された'signin'のルールに従って
+HTTP Requestをチェックします。
+ユーザーの入力値が、定義されたルールにそぐわなければ
+results.HasFailureがtrueを返します。
+
 You can put "error messages block" on your html
 
 ```html
@@ -151,3 +179,9 @@ Or you also can set messages for each form-element
 <button type="submit">Sign in</button><br />
 </form>
 ```
+
+## Rule File Format
+
+## Constraints
+
+## Filters
