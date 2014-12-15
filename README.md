@@ -203,7 +203,7 @@ password := results.ValidParam("password")
 このフィールドにfilter ルールが指定されいた場合、`ValidParam`で取得できる値は
 フィルタ済みの値になります。
 
-例えばtrim, lowercase, uppercaseというようなフィルタを指定することが可能です。
+例えば`trim`, `lowercase`, `uppercase`というようなフィルタを指定することが可能です。
 フィルター機能については、詳しくは別の頁で説明をします。
 
 また、このメソッドを通すことで、検証済みの値であることが保証されます。
@@ -264,9 +264,9 @@ GoFormKeeperは、エラーメッセージのハンドリング機能を備え�
 ```
 
 `FailedOnConstraint`, `MessageOnConstraint`を使えば、
-どの種類の検証に失敗したかをチェックすることが可能です。
+どの制約の検証に失敗したかをチェックすることが可能です。
 例えば、「入力値の長さに問題にあった場合」や「入力値が数字でなかった場合など」、
-検証の種類により、細かく処理を分けることも可能です
+制約の種類により、細かく処理を分けることも可能です
 
 ```html
 <form action="/signin" method="POST">
@@ -462,6 +462,7 @@ rule, err := goformkeeper.LoadRuleFromDir("conf/rule")
 次のようなデータ構造で作られたルールを、検証が必要なフィールド毎に用意してリストにします。
 
 ```yaml
+fields:
   - name: email
     required: true
     message: "Input email address correctly"
@@ -469,55 +470,66 @@ rule, err := goformkeeper.LoadRuleFromDir("conf/rule")
       - trim
       - lowercase
     constraints:
-    - type: email
-    - type: length
-      criteria:
-        from: 0
-        to: 20
+      - type: email
+      - type: length
+        criteria:
+          from: 0
+          to: 20
 ```
 
 このデータ構造は次のパラメータで構成されます。
 
-**** name
+#### name
 
 必須パラメータです。
-この名前はHTML上のformの中の検証したいコンポーネントに付けた名前と同じにして下さい。
+この名前はHTML上のformの中の検証したいコンポーネントに付けた名前と同じにして下さい
 
-**** required
+#### required
 
 この値をtrueにした場合、そのフィールドパラメータが存在しなかったり、空文字列だった場合に検証失敗と判断します。
 この値がfalseであった場合は、値が空であっても、以降のconstraintsの検証をスキップし、検証成功と同じ扱いにします。
 フィールドパラメータが空でなかった場合は、通常の処理として指定されたconstraintsによる検証を順次行います。
 
-**** message
+#### message
 
 このフィールドで検証失敗した場合に、ユーザーに表示したいメッセージ文字列を定義します。
 メッセージは制約ごとに分けて書く事も可能ですが、フィールド毎に一つのメッセージで十分な場合はここで定義します。
 
-**** filters
+#### filters
 
 このフィールドに対して処理をかけたいフィルターをリストアップします。
 フィルターはまず最初に実行され、constraintの検証は、フィルターされた結果に対して行われます。
 
-**** constraints
+#### constraints
 
 ここにconstraintをリストアップしていきます。
-一つ一つのconstraintのデータ構造は以下のように、`type`と`criteria`の二つのパラメータで構成されます。
+一つ一つのconstraintのデータ構造は以下のように、`type`、`criteria`、`message`の三つのパラメータで構成されます。
 `type`の種類によっては、`criteria`が必要ないものもあります。
+`criteria`に含めるパラメータは制約のtypeごとに違うものになります。
+messageは、制約毎に出したい場合のみ定義すれば大丈夫です。
 
 ```yaml
 constraints:
-- type: email
-- type: length
-  criteria:
-    from: 0
-    to: 20
+  - type: email
+  - type: length
+    message: "Name length should be 0..10"
+    criteria:
+      from: 0
+      to: 20
 ```
 
 ### Constraints
 
-#### email
 #### length
+#### rune_count
+#### alphabet
+#### alnum
+#### ascii
+#### ascii_without_space
+#### regex
+#### url
+#### email
+#### loose_email
 
 ### Filters
 
@@ -525,6 +537,7 @@ constraints:
 #### lowercase
 #### uppercase
 
+### Reference
 ### Selection
 
 ## Author
