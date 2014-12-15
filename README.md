@@ -4,15 +4,18 @@ GoFormKeeper provides you a easy way to validate form parameters in Golang.
 
 ## Installation
 
-go get github.com/lyokato/goformkeeper
-
-## Dependency
-
 This library depends on "gopkg.in/yaml.v1"
+So, go get this package beforehand
+
+```
+go get gopkg.in/yaml.v1
+go get github.com/lyokato/goformkeeper
+```
 
 ## TODO
 
 ADDS MORE TEST
+
 Translation to English
 
 ## Getting Started
@@ -24,7 +27,7 @@ Translation to English
 <form action="/signin" method="POST">
   <input type="text" name="email" />
   <input type="password" name="password" />
-  <button type="submit'>Sign in</button>
+  <button type="submit">Sign in</button>
 </form>
 ```
 
@@ -124,17 +127,22 @@ func main() {
       }
       return
     }
+
+    // valid input
+
+    email    := results.ValidParam("email")
+    password := results.ValidParam("password")
   }
 
 ```
 
 まず冒頭部分で事前に定義されたルールファイルを読み込んでいます。
-```
+```go
 rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
 ```
 
 次に、Postメソッドに注目して下さい。
-```
+```go
 results, err := rule.Validate("signin", req)
 if results.HasFailure() {
   // show form page again, with error messages
@@ -146,7 +154,50 @@ HTTP Requestをチェックします。
 ユーザーの入力値が、定義されたルールにそぐわなければ
 results.HasFailureがtrueを返します。
 
-You can put "error messages block" on your html
+ここで、戻り値のerrではなく、results.HasFailureを使って分岐をしている点に注意してください。
+ここでerrがnilでは無い場合、そのerrが表すのは、ユーザーの入力による問題ではなくプログラム内部の問題です。
+例えば指定された"signin"というルールが存在しない、などの場合にエラーと判断されます。
+
+ユーザーが、あらかじめ指定されたruleに違反する入力を行ったかどうかは
+results.HasFailureでチェックします。
+
+
+エラーがなかった場合は入力値に問題なかったと判断し、
+処理を進めますが、その祭に、resultsオブジェクトの
+`ValidParam`メソッドを利用して以下のように、検証済みの値を取得できます。
+
+
+元のHTTPRequestから値を取得するのとどう違うのかというと、
+ルールで、filterが指定されいた場合、`ValidParam`で取得できる値は
+フィルタ済みの値になります。
+
+例えばtrim, lowercase, uppercaseというようなフィルタを指定することが可能です。フィルター機能については、詳しくは別の頁で説明をします。
+
+```go
+email    := results.ValidParam("email")
+password := results.ValidParam("password")
+
+// myApp.Login(email, password)
+```
+
+
+次にHTML Templateの生成部分を見てみましょう
+この例ではpongo2を利用していますので、以下のように
+templateにparameterを渡しています。
+
+validationのresultsオブジェクトをパラメータとして渡しています。
+
+```go
+err = tpl.ExecuteWriter(pongo2.Context{
+  "form":  results,
+  "title": "Hello, World!",
+}, res)
+```
+
+GoFormKeeperは、エラーメッセージのハンドリング機能を備えています。
+以下のようにすれば、ルールに外れた入力が行われたフィールドに関する
+メッセージのリストが表示されます。
+ここで表示されるメッセージ文字列は、Rule fileで定義されたものです。
 
 ```html
 {% if form.HasFailure %}
@@ -159,7 +210,9 @@ You can put "error messages block" on your html
 {% endif %}
 ```
 
-Or you also can set messages for each form-element
+上の例では、`Messages`メソッドを利用して、メッセージをまとめてリスト表示しましたが、
+次のように、`FailedOn`, `MessageOn`メソッドを使って、invalidな入力が行われたフィールドの
+それぞれのコンポーネントの側に、別々にエラーメッセージを添えることもできます。
 
 ```html
 <form action="/signin" method="POST">
@@ -177,6 +230,27 @@ Or you also can set messages for each form-element
 <input type="password" name="password" /><br />
 
 <button type="submit">Sign in</button><br />
+</form>
+```
+
+`FailedOnConstraint`, `MessageOnConstraint`を使えば、
+どの種類の検証に失敗したかをチェックすることが可能です。
+例えば、「入力値の長さに問題にあった場合」や「入力値が数字でなかった場合など」、
+検証の種類により、細かく処理を分けることも可能です
+
+```html
+<form action="/signin" method="POST">
+
+{% if form.FailedOnConstraint("email", "length") %}
+<p>INVALID: {{ form.MessageOnConstraint("email", "length") }}</p>
+{% endif %}
+
+{% if form.FailedOnConstraint("email", "email") %}
+<p>INVALID: {{ form.MessageOnConstraint("email", "email") }}</p>
+{% endif %}
+
+<input type="text" name="email" /><br />
+
 </form>
 ```
 
