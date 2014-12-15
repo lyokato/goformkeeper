@@ -1,6 +1,7 @@
 # GoFormKeeper
 
 GoFormKeeper provides you a easy way to validate form parameters in Golang.
+(This library is not stable version yet)
 
 ## Installation
 
@@ -20,8 +21,15 @@ Translation to English
 
 ## Getting Started
 
+
+### Input Form
+
 あなたのWebアプリケーションに次のようなformがあり、
 このformに対するユーザーの入力をチェックしたいとします。
+
+次の例では、signinの処理のために、
+ユーザーに対してemailとpasswordの入力を要求しています。
+サーバー側では、これらの値が適切に入力されたか検証する必要があります。
 
 ```html
 <form action="/signin" method="POST">
@@ -31,10 +39,12 @@ Translation to English
 </form>
 ```
 
+### Rule File
+
 次のように、ruleを定義したYAMLファイルを用意します。
 
 下の例では、ルールのセットに`signin`という名前を付けて、
-`fields`以下に、各フィールドのvalidationのルールを定義してあるのが
+`fields`以下に、各フィールドの検証ルールを定義してあるのが
 なんとなく分かるでしょうか。
 
 ルールの定義の仕方について、詳しくは後で説明します。
@@ -62,6 +72,8 @@ forms:
             from: 5
             to: 20
 ```
+
+### Application Example
 
 Webアプリケーションは、このように用意されたルールファイルを読み込み、
 そこから生成された`Rule`オブジェクトを利用して、HTTP requestをチェックします。
@@ -136,6 +148,7 @@ func main() {
 
 ```
 
+#### Loading Rule File
 
 まず冒頭部分で事前に定義されたルールファイルを読み込んでいます。
 ここで、`Rule`オブジェクトを作成しています。ファイルが存在しなかったり、
@@ -145,6 +158,8 @@ errが返ります。
 ```go
 rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
 ```
+
+#### Validation
 
 次に、Postメソッドに注目して下さい。
 ```go
@@ -175,6 +190,8 @@ HTTP requestをチェックし、その結果を`Results`オブジェクトと�
 処理を進めますが、その祭に、resultsオブジェクトの
 `ValidParam`メソッドを利用して以下のように、検証済みの値を取得できます。
 
+#### Valid Parameter
+
 ```go
 email    := results.ValidParam("email")
 password := results.ValidParam("password")
@@ -183,14 +200,16 @@ password := results.ValidParam("password")
 ```
 
 元の`http.Request`から値を直接取得するのとどう違うのかというと、
-ルールで、filterが指定されいた場合、`ValidParam`で取得できる値は
+このフィールドにfilter ルールが指定されいた場合、`ValidParam`で取得できる値は
 フィルタ済みの値になります。
 
-例えばtrim, lowercase, uppercaseというようなフィルタを指定することが可能です。フィルター機能については、詳しくは別の頁で説明をします。
+例えばtrim, lowercase, uppercaseというようなフィルタを指定することが可能です。
+フィルター機能については、詳しくは別の頁で説明をします。
 
 また、このメソッドを通すことで、検証済みの値であることが保証されます。
 
 
+#### Error Message Handling
 
 次にHTML Templateの生成部分を見てみましょう
 この例ではpongo2を利用していますので、以下のように
@@ -267,6 +286,190 @@ GoFormKeeperは、エラーメッセージのハンドリング機能を備え�
 
 ## Rule File Format
 
-## Constraints
+Ruleファイルの書き方を説明します。
+上の例で使ったファイルをもう一度見てみましょう。
 
-## Filters
+signinに使うルールが定義されています。
+
+```yaml
+forms:
+  signin:
+    fields:
+      - name: email
+        required: true
+        message: "Input email address correctly"
+        constraints:
+        - type: email
+        - type: length
+          criteria:
+            from: 0
+            to: 20
+      - name: password
+        required: true
+        message: "Input password correctly"
+        constraints:
+        - type: length
+          message: "password length should be 5 - 20"
+          criteria:
+            from: 5
+            to: 20
+```
+
+signinに使うルールが定義されています。
+singinではなく、ユーザー登録によるsignup用のフォームが作りたくなったとします。
+
+以下のようにsignupのrule setを追加します。
+
+```yaml
+forms:
+  signin:
+    fields:
+      - name: email
+        required: true
+        message: "Input email address correctly"
+        constraints:
+        - type: email
+        - type: length
+          criteria:
+            from: 0
+            to: 20
+      - name: password
+        required: true
+        message: "Input password correctly"
+        constraints:
+        - type: length
+          message: "password length should be 5 - 20"
+          criteria:
+            from: 5
+            to: 20
+  signup:
+    fields:
+      - name: email
+        required: true
+        message: "Input email address correctly"
+        constraints:
+        - type: email
+        - type: length
+          criteria:
+            from: 0
+            to: 20
+      - name: username
+        required: true
+        message: "Input Username correctly"
+        constraints:
+        - type: length
+          message: "password length should be 5 - 20"
+          criteria:
+            from: 5
+            to: 20
+      - name: password
+        required: true
+        message: "Input password correctly"
+        constraints:
+        - type: length
+          message: "password length should be 5 - 20"
+          criteria:
+            from: 5
+            to: 20
+```
+
+このように、formごとにルールセットを追加していきます。
+
+
+作成したルールファイルは次のように読み込む事ができます。
+
+```go
+rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
+```
+
+ただし、このままルールを増やしていくとruleファイルのサイズが膨大になっていき
+メンテナンスがしにくくなっていくでしょう。
+そのような場合はルールファイルを複数に分けていくことを推奨します。
+
+
+例えばsignin.ymlとsignup.ymlに分離します。
+
+conf/rule/signin.yml
+```yaml
+forms:
+  signin:
+    fields:
+      - name: email
+        required: true
+        message: "Input email address correctly"
+        constraints:
+        - type: email
+        - type: length
+          criteria:
+            from: 0
+            to: 20
+      - name: password
+        required: true
+        message: "Input password correctly"
+        constraints:
+        - type: length
+          message: "password length should be 5 - 20"
+          criteria:
+            from: 5
+            to: 20
+```
+
+conf/rule/signup.yml
+```yaml
+forms:
+  signup:
+    fields:
+      - name: email
+        required: true
+        message: "Input email address correctly"
+        constraints:
+        - type: email
+        - type: length
+          criteria:
+            from: 0
+            to: 20
+      - name: username
+        required: true
+        message: "Input Username correctly"
+        constraints:
+        - type: length
+          message: "password length should be 5 - 20"
+          criteria:
+            from: 5
+            to: 20
+      - name: password
+        required: true
+        message: "Input password correctly"
+        constraints:
+        - type: length
+          message: "password length should be 5 - 20"
+          criteria:
+            from: 5
+            to: 20
+```
+
+このようにルールファイルを分割する場合は、
+`LoadRuleFromFile`ではなく、`LoadRuleFromDir`を使います。
+ディレクトリ内の全てのRuleファイルを読み込み、
+統合された一つの`Rule`オブジェクトを作ることができます。
+
+```go
+rule, err := goformkeeper.LoadRuleFromDir("conf/rule")
+```
+
+### Constraints
+
+### Filters
+
+### Selection
+
+## Author
+
+Lyo Kato <lyo.kato _at_ gmail.com>
+
+## License
+
+Copyright (c) 2014 by Lyo Kato
+
+MIT License
+
