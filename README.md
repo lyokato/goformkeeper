@@ -211,7 +211,7 @@ password := results.ValidParam("password")
 
 #### Error Message Handling
 
-次にHTML Templateの生成部分を見てみましょう
+次にHTML Templateの生成部分を見てみましょう。
 この例ではpongo2を利用していますので、以下のように
 templateにparameterを渡しています。
 
@@ -316,7 +316,7 @@ forms:
 ```
 
 signinに使うルールが定義されています。
-singinではなく、ユーザー登録によるsignup用のフォームが作りたくなったとします。
+singinではなく、ユーザー登録によるsignup用のフォームも追加したくなったとします。
 
 以下のようにsignupのrule setを追加します。
 
@@ -382,9 +382,8 @@ forms:
 rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
 ```
 
-ただし、このままルールを増やしていくとruleファイルのサイズが膨大になっていき
-メンテナンスがしにくくなっていくでしょう。
-そのような場合はルールファイルを複数に分けていくことを推奨します。
+ただし、このままルールを増やしていくとruleファイルのサイズが膨大になっていき、メンテナンスがしにくくなっていくでしょう。
+そのような場合はルールファイルを複数に分けて書くことを推奨します。
 
 
 例えばsignin.ymlとsignup.ymlに分離します。
@@ -457,9 +456,74 @@ forms:
 rule, err := goformkeeper.LoadRuleFromDir("conf/rule")
 ```
 
+### Fields
+
+で次に`fields`以下の設定を見ていきます
+次のようなデータ構造で作られたルールを、検証が必要なフィールド毎に用意してリストにします。
+
+```yaml
+  - name: email
+    required: true
+    message: "Input email address correctly"
+    filters:
+      - trim
+      - lowercase
+    constraints:
+    - type: email
+    - type: length
+      criteria:
+        from: 0
+        to: 20
+```
+
+このデータ構造は次のパラメータで構成されます。
+
+**** name
+
+必須パラメータです。
+この名前はHTML上のformの中の検証したいコンポーネントに付けた名前と同じにして下さい。
+
+**** required
+
+この値をtrueにした場合、そのフィールドパラメータが存在しなかったり、空文字列だった場合に検証失敗と判断します。
+この値がfalseであった場合は、値が空であっても、以降のconstraintsの検証をスキップし、検証成功と同じ扱いにします。
+フィールドパラメータが空でなかった場合は、通常の処理として指定されたconstraintsによる検証を順次行います。
+
+**** message
+
+このフィールドで検証失敗した場合に、ユーザーに表示したいメッセージ文字列を定義します。
+メッセージは制約ごとに分けて書く事も可能ですが、フィールド毎に一つのメッセージで十分な場合はここで定義します。
+
+**** filters
+
+このフィールドに対して処理をかけたいフィルターをリストアップします。
+フィルターはまず最初に実行され、constraintの検証は、フィルターされた結果に対して行われます。
+
+**** constraints
+
+ここにconstraintをリストアップしていきます。
+一つ一つのconstraintのデータ構造は以下のように、`type`と`criteria`の二つのパラメータで構成されます。
+`type`の種類によっては、`criteria`が必要ないものもあります。
+
+```yaml
+constraints:
+- type: email
+- type: length
+  criteria:
+    from: 0
+    to: 20
+```
+
 ### Constraints
 
+#### email
+#### length
+
 ### Filters
+
+#### trim
+#### lowercase
+#### uppercase
 
 ### Selection
 
