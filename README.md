@@ -33,8 +33,8 @@ Translation to English
 
 次のように、ruleを定義したYAMLファイルを用意します。
 
-下の例では、ルールのセットに'signin'という名前を付けて、
-'fields'以下に、各フィールドのvalidationのルールを定義してあるのが
+下の例では、ルールのセットに`signin`という名前を付けて、
+`fields`以下に、各フィールドのvalidationのルールを定義してあるのが
 なんとなく分かるでしょうか。
 
 ルールの定義の仕方について、詳しくは後で説明します。
@@ -64,9 +64,9 @@ forms:
 ```
 
 Webアプリケーションは、このように用意されたルールファイルを読み込み、
-HTTP Requestをチェックします。
+そこから生成された`Rule`オブジェクトを利用して、HTTP requestをチェックします。
 
-以下はMartiniとPongo2を使った簡単なサンプルです。
+以下はmartiniとpongo2を使った簡単なサンプルです。
 
 ```go
 package main
@@ -136,7 +136,12 @@ func main() {
 
 ```
 
+
 まず冒頭部分で事前に定義されたルールファイルを読み込んでいます。
+ここで、`Rule`オブジェクトを作成しています。ファイルが存在しなかったり、
+ファイルのフォーマットに問題があって`Rule`オブジェクトが生成できなかった場合は、
+errが返ります。
+
 ```go
 rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
 ```
@@ -144,34 +149,31 @@ rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
 次に、Postメソッドに注目して下さい。
 ```go
 results, err := rule.Validate("signin", req)
+if err != nil {
+  // プログラム内部の問題、デベロッパーが直すべき
+}
+
 if results.HasFailure() {
-  // show form page again, with error messages
+  // ユーザー入力値の問題、エンドユーザーにメッセージを表示して修正を求める
 }
 ```
 
-ルールファイルの中で定義された'signin'のルールに従って
-HTTP Requestをチェックします。
+ルールファイルの中で定義された`signin`のルールセットに従って
+HTTP requestをチェックし、その結果を`Results`オブジェクトとして返します。
 ユーザーの入力値が、定義されたルールにそぐわなければ
-results.HasFailureがtrueを返します。
+`Results`オブジェクトの`HasFailure`メソッドがtrueを返します。
 
-ここで、戻り値のerrではなく、results.HasFailureを使って分岐をしている点に注意してください。
+ここで、戻り値のerrではなく、`HasFailure`を使って分岐をしている点に注意してください。
 ここでerrがnilでは無い場合、そのerrが表すのは、ユーザーの入力による問題ではなくプログラム内部の問題です。
-例えば指定された"signin"というルールが存在しない、などの場合にエラーと判断されます。
+例えば指定された`signin`というルールが存在しない、などの場合にエラーと判断されます。
+プログラム内部の問題はデベロッパーが修正すべき問題ですので、エンドユーザーによる不正入力値とは処理を分けます。
 
 ユーザーが、あらかじめ指定されたruleに違反する入力を行ったかどうかは
-results.HasFailureでチェックします。
-
+`HasFailure`でチェックします。
 
 エラーがなかった場合は入力値に問題なかったと判断し、
 処理を進めますが、その祭に、resultsオブジェクトの
 `ValidParam`メソッドを利用して以下のように、検証済みの値を取得できます。
-
-
-元のHTTPRequestから値を取得するのとどう違うのかというと、
-ルールで、filterが指定されいた場合、`ValidParam`で取得できる値は
-フィルタ済みの値になります。
-
-例えばtrim, lowercase, uppercaseというようなフィルタを指定することが可能です。フィルター機能については、詳しくは別の頁で説明をします。
 
 ```go
 email    := results.ValidParam("email")
@@ -180,12 +182,21 @@ password := results.ValidParam("password")
 // myApp.Login(email, password)
 ```
 
+元の`http.Request`から値を直接取得するのとどう違うのかというと、
+ルールで、filterが指定されいた場合、`ValidParam`で取得できる値は
+フィルタ済みの値になります。
+
+例えばtrim, lowercase, uppercaseというようなフィルタを指定することが可能です。フィルター機能については、詳しくは別の頁で説明をします。
+
+また、このメソッドを通すことで、検証済みの値であることが保証されます。
+
+
 
 次にHTML Templateの生成部分を見てみましょう
 この例ではpongo2を利用していますので、以下のように
 templateにparameterを渡しています。
 
-validationのresultsオブジェクトをパラメータとして渡しています。
+`Results`オブジェクトをパラメータとして渡しています。
 
 ```go
 err = tpl.ExecuteWriter(pongo2.Context{
