@@ -11,7 +11,7 @@ import (
 )
 
 func TestLoadRule(t *testing.T) {
-	path := "../tests/form/rules.yml"
+	path := "./tests/rules.yml"
 	dir, _ := os.Getwd()
 	path = filepath.Join(dir, path)
 
