@@ -21,8 +21,8 @@ forms:
         message: "Check You Preference"
         count:
           eq: 10
-      - name: hoby
-        message: "Check You Preference"
+      - name: hobby
+        message: "Check You Hobby"
         count:
           from: 0
           to: 10

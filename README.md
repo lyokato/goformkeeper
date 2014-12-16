@@ -503,10 +503,13 @@ fields:
 #### constraints
 
 ここにconstraintをリストアップしていきます。
-一つ一つのconstraintのデータ構造は以下のように、`type`、`criteria`、`message`の三つのパラメータで構成されます。
-`type`の種類によっては、`criteria`が必要ないものもあります。
-`criteria`に含めるパラメータは制約のtypeごとに違うものになります。
-messageは、制約毎に出したい場合のみ定義すれば大丈夫です。
+一つ一つのconstraintのデータ構造は、`type`、`criteria`、`message`の三つのパラメータで構成されます。
+`message`は、制約毎に出したい場合のみ定義すれば大丈夫です。
+
+
+`criteria`は、そのconstraintを検証するに当たっての補助的な条件の指定です。
+下の例ではlengthという文字の長さの制約が指定されていますが、
+その補助的な条件として、0以上、20以下という条件がcriteriaにより指定されています。
 
 ```yaml
 constraints:
@@ -518,27 +521,287 @@ constraints:
       to: 20
 ```
 
+`type`の種類によっては、`criteria`が必要ないものもあります。
+`criteria`に含めるパラメータは制約のtypeごとに違うものになります。
+
+### Selection
+
+`<select/>`や`<checkbox/>`など、複数の値を扱うコンポーネントに対してはどうすればよいでしょうか。
+
+```html
+<input type="checkbox" name="hobby[]" value="1" checked>
+<label>check1</label>
+<input type="checkbox" name="hobby[]" value="2" checked>
+<label>check2</label>
+<input type="checkbox" name="hobby[]" value="3" checked>
+<label>check3</label>
+```
+
+このために`selection`というルールが使えます
+
+```yaml
+forms:
+  signin:
+    selection:
+      - name: preference
+        message: "Check You Preference"
+        count:
+          eq: 10
+      - name: hobby
+        message: "Check You Hobby"
+        count:
+          from: 0
+          to: 10
+        constraints:
+          - type: length
+            message: "Name length should be 0..10"
+            criteria:
+              from: 0
+              to: 10
+    fields: 
+      # ...
+```
+
+`fields`のルールセットとは別に`selection`というルールセットを定義します。
+
+`selection`として定義できるデータ構造は、基本的には`fields`で定義されたフィールド用のルールと同じですが、`required`の代わりに`count`を定義します。
+
+「このチェックボックスでは、3つチェックされなければならない」というような条件にしたいときは、次のように`eq`を使います。
+
+
+```yaml
+  - name: preference
+    message: "Check You Preference"
+    count:
+      eq: 3
+```
+
+「このチェックボックスでは、1個以上、3個以下チェックされなければならない」というような条件にしたいときは、次のように`from`と`to`を組み合わせて使います。
+
+```yaml
+  - name: hobby
+    message: "Check You Hobby"
+    count:
+      from: 1
+      to: 3
+```
+
+また、filterやconstraintsが指定されていた場合は、このcheckboxやselectなどで指定された全ての値に対して、それらを使って検証を行います。
+
+### Reference
+
+このように、それぞれのフォームに対してYAMLデータを定義していきますが、何度も重複する項目が出現することがあります。
+たとえば`username`は、signinフォームやsignupフォームなど、様々な場所で入力を要求される可能性があります。
+
+そのような場合にはリファレンス指定が使えます。
+
+```yaml
+fields:
+  username:
+    name: username
+    required: true
+    message: "Input Name"
+    filters:
+      - trim
+      - uppercase
+    constraints:
+      - type: length
+        message: "Name length should be 0..10"
+        criteria:
+          from: 0
+          to: 10
+  password:
+    name: password
+    required: true
+    message: "Input Password"
+    filters:
+      - trim
+      - lowercase
+    constraints:
+      - type: length
+        message: "Password length should be 0..10"
+        criteria:
+          from: 0
+          to: 10
+
+forms:
+  signin:
+    fields: 
+      - ref: username
+      - ref: password
+  signup:
+    fields: 
+      - ref: username
+      - ref: password
+      # and rules for other fields
+```
+
+上記のように、`forms`定義の外にfieldルールを定義しておきます。
+そうすると各フォーム用のfieldルールの中から、`ref`を使って参照することが可能です。
+
+リファレンスを使いつつ、一部の設定だけ書き換えたいときは、次のように、refに並べる形で、今まで通りパラメータを書くだけです。
+
+```yaml
+forms:
+  signin:
+    fields: 
+      - ref: username
+        name: changedName
+```
+
 ### Constraints
 
 #### length
+
+長さをチェックします。
+マルチバイト文字列に対する文字数チェックは`length`ではなく、`rune_count`のほうを利用してください。
+
+`from`,`to`で範囲指定する方法と`eq`で数を指定する方法があります。
+
+```yaml
+  - type: length
+    criteria:
+      eq: 10
+```
+
+```yaml
+  - type: length
+    criteria:
+      from: 3
+      to: 10
+```
+
 #### rune_count
+
+文字数をチェックします。マルチバイトの文字は複数バイトでも一文字とカウントされます。
+`length`制約と同様に、`from`,`to`で範囲指定する方法と`eq`で数を指定する方法があります。
+
+```yaml
+  - type: rune_count
+    criteria:
+      from: 3
+      to: 10
+```
+
+```yaml
+  - type: rune_count
+    criteria:
+      eq: 10
+```
+
 #### alphabet
+
+アルファベットだけで構成されているかどうかを検証します
+
+```yaml
+  - type: alphabet
+```
+
 #### alnum
+
+アルファベットと数値だけで構成されているかどうかを検証します
+
+```yaml
+  - type: alphabet
+```
+
 #### ascii
+
+ASCII文字列だけで構成されているかどうかを検証します
+
+```yaml
+  - type: ascii
+```
 #### ascii_without_space
+
+空白を除いたASCII文字列だけで構成されているかどうかを検証します
+
+```yaml
+  - type: ascii_without_space
+```
 #### regex
+
+指定された正規表現にマッチするかを検証します
+
+```yaml
+  - type: regex
+    criteria:
+      regex: "^[0-9]+$"
+```
 #### url
+
+URLかどうかを検証します
+
+```yaml
+  - type: url
+```
+
 #### email
+
+Emailアドレスかどうかを検証します
+
+```yaml
+  - type: email
+```
+
 #### loose_email
+
+Emailアドレスかどうかを検証しますが、
+こちらは少し緩めのチェックになっています。
+
+```yaml
+  - type: loose_email
+```
 
 ### Filters
 
 #### trim
+
+前後の空白を削除します。
+
 #### lowercase
+
+文字列を全て小文字に変換します。
+
 #### uppercase
 
-### Reference
-### Selection
+文字列を全て大文字に変換します。
+
+### Custom Constraints
+
+制約を自分で作る場合は以下のように、
+Validatorインターフェースを実装したstructを用意し、
+AddValidatorで名前をつけて定義するだけです。
+
+Validateメソッドの中の書き方などは、goformkeeper/validators.goの中で定義されている他のValidatorがどのように書かれているかを参照するとよいでしょう。
+
+```go
+type MyValidator struct{}
+
+func (v *MyValidator) Validate(value string, criteria *Criteria) (bool, error) {
+  // ...
+}
+
+goformkeeper.AddValidator("my_constraint", &MyValidator{})
+```
+
+### Custom Filters
+
+フィルタを自分で作る場合は以下のように
+AddFilterFuncで名前を付けて、対応する関数を渡すだけです。
+関数は一つの文字列を受け取り、一つの文字列を返すものでなければなりません。
+
+```go
+goformkeeper.AddFilterFunc("my_filter", MyFilterFunc)
+```
+
+実際、プリセットのフィルタは次のように定義されているだけです。
+
+```go
+AddFilterFunc("trim", strings.TrimSpace)
+AddFilterFunc("lowercase", strings.ToLower)
+AddFilterFunc("uppercase", strings.ToUpper)
+```
 
 ## Author
 
