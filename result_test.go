@@ -104,4 +104,17 @@ func TestResult2(t *testing.T) {
 	if m2[1] != "Field02 is not Email Address" {
 		t.Errorf("second error message returns wrong string: %s", m2[1])
 	}
+
+	errorFields := r.FailedFields()
+	if len(errorFields) != 2 {
+		t.Errorf("FailedFields() returns invalid number")
+	}
+
+	if errorFields[0] != "Field02" {
+		t.Errorf("FailedFields() returns wrong field: %s", errorFields[0])
+	}
+
+	if errorFields[1] != "Field03" {
+		t.Errorf("FailedFields() returns wrong field: %s", errorFields[1])
+	}
 }
