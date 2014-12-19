@@ -209,7 +209,7 @@ func (field *Field) validate(result *Result, value string) error {
 			return nil
 		}
 	} else {
-		failure := NewFailureForField(field)
+		failure := NewFailureForField(field.Name, field.Message)
 		passAll := true
 		for _, constraint := range field.Constraints {
 			pass, err := validate(value, constraint)
@@ -218,7 +218,7 @@ func (field *Field) validate(result *Result, value string) error {
 			}
 			if !pass {
 				passAll = false
-				failure.failOnConstraint(constraint)
+				failure.failOnConstraint(constraint.Type, constraint.Message)
 				if !field.FallThrough {
 					break
 				}
@@ -240,7 +240,7 @@ func (selection *Selection) validate(result *Result, values []string) error {
 			result.ValidSelections[selection.Name] = []string{}
 			return nil
 		}
-		failure := NewFailureForSelection(selection)
+		failure := NewFailureForSelection(selection.Name, selection.Message)
 		passAll := true
 		for _, value := range values {
 			for _, constraint := range selection.Constraints {
@@ -250,7 +250,7 @@ func (selection *Selection) validate(result *Result, values []string) error {
 				}
 				if !pass {
 					passAll = false
-					failure.failOnConstraint(constraint)
+					failure.failOnConstraint(constraint.Type, constraint.Message)
 					break
 				}
 			}

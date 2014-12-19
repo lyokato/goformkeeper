@@ -1,5 +1,7 @@
 package goformkeeper
 
+import "sort"
+
 type UniqueStringArrayBuilder struct {
 	data map[string]bool
 }
@@ -19,6 +21,7 @@ func (b *UniqueStringArrayBuilder) Build() []string {
 	for value, _ := range b.data {
 		values = append(values, value)
 	}
+	sort.Strings(values)
 	return values
 }
 

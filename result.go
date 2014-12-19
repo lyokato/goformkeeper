@@ -25,28 +25,28 @@ type ConstraintFailure struct {
 	Message        string
 }
 
-func NewFailureForSelection(selection *Selection) *Failure {
+func NewFailureForSelection(selectionName, selectionMessage string) *Failure {
 	return &Failure{
-		FieldName:   selection.Name,
-		Message:     selection.Message,
+		FieldName:   selectionName,
+		Message:     selectionMessage,
 		Constraints: make(map[string]*ConstraintFailure),
 	}
 }
 
-func NewFailureForField(field *Field) *Failure {
+func NewFailureForField(fieldName, fieldMessage string) *Failure {
 	return &Failure{
-		FieldName:   field.Name,
-		Message:     field.Message,
+		FieldName:   fieldName,
+		Message:     fieldMessage,
 		Constraints: make(map[string]*ConstraintFailure),
 	}
 }
 
-func (failure *Failure) failOnConstraint(constraint *Constraint) {
+func (failure *Failure) failOnConstraint(constraintType, constraintMessage string) {
 	constraintFailure := &ConstraintFailure{
-		ConstraintType: constraint.Type,
-		Message:        constraint.Message,
+		ConstraintType: constraintType,
+		Message:        constraintMessage,
 	}
-	failure.Constraints[constraint.Type] = constraintFailure
+	failure.Constraints[constraintType] = constraintFailure
 }
 
 func (result *Result) AddFailure(failure *Failure) {
