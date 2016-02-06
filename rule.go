@@ -26,6 +26,7 @@ type Field struct {
 	Name        string
 	Ref         string
 	Required    bool
+	Default     string
 	Message     string
 	Filters     []string
 	Constraints []*Constraint
@@ -106,6 +107,7 @@ func (field *Field) mergeReferenceIfNeeded(rule *Rule) {
 				field.Message = ref.Message
 			}
 			field.Required = ref.Required
+			field.Default = ref.Default
 			field.Constraints = ref.Constraints
 			field.Filters = ref.Filters
 		}
@@ -165,7 +167,11 @@ func (rule *Rule) Validate(formName string, req *http.Request) (*Result, error) 
 		if field.Name == "" {
 			return nil, fmt.Errorf("Field name not found on a rule for '%s'", formName)
 		}
-		value, err := filter(field, req.FormValue(field.Name))
+		fv := req.FormValue(field.Name)
+		if fv == "" && field.Default != "" {
+			fv = field.Default
+		}
+		value, err := filter(field, fv)
 		if err != nil {
 			return nil, err
 		}

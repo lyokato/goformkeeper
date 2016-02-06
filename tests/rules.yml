@@ -46,3 +46,15 @@ forms:
             criteria:
               from: 0
               to: 10
+      - name: other
+        default: "Default"
+        message: "Input Other"
+        filters:
+          - trim
+          - lowercase
+        constraints:
+          - type: length
+            message: "Other length should be 0..10"
+            criteria:
+              from: 0
+              to: 10

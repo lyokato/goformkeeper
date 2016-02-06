@@ -35,6 +35,11 @@ func TestLoadRule(t *testing.T) {
 		return
 	}
 
+	if result.ValidParam("other") != "default" {
+		t.Errorf("RESULT:", pretty.Formatter(result.Messages()))
+		t.Errorf("Failed validation: want %s, got %s", "default", result.ValidParam("other"))
+	}
+
 	if result.ValidParam("username") != "FOOBAR" {
 		t.Errorf("RESULT:", pretty.Formatter(result.Messages()))
 		t.Errorf("Failed validation: want %s, got %s", "FOOBAR", result.ValidParam("username"))

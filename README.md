@@ -88,7 +88,7 @@ import (
   "net/http"
   "github.com/flosch/pongo2"
   "github.com/go-martini/martini"
-  "github.com/lyokato/goformkeeper"
+  fk "github.com/lyokato/goformkeeper"
   "github.com/martini-contrib/render"
 )
 
@@ -98,7 +98,7 @@ func main() {
 
   m.Use(render.Renderer())
 
-  rule, err := goformkeeper.LoadRuleFromFile("conf/rule.yml")
+  rule, err := fk.LoadRuleFromFile("conf/rule.yml")
   if err != nil {
     fmt.Println(err)
     return
