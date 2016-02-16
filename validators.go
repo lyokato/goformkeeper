@@ -91,7 +91,7 @@ type LooseEmailAddressValidator struct{}
 
 // thanks to https://github.com/StefanSchroeder/Golang-Regex-Tutorial/blob/master/01-chapter3.markdown
 func (v *LooseEmailAddressValidator) Validate(value string, criteria *Criteria) (bool, error) {
-	if m, _ := regexp.MatchString("^(\\w[-._\\w]*\\w@\\w[-._\\w]*\\w\\.\\w{2,3})$", value); !m {
+	if m, _ := regexp.MatchString("^(\\w[-._+\\w]*\\w@\\w[-._\\w]*\\w\\.\\w{2,3})$", value); !m {
 		return false, nil
 	}
 	return true, nil
