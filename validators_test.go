@@ -12,4 +12,8 @@ func TestLooseEmail(t *testing.T) {
 		t.Errorf("allow + in the email")
 	}
 
+	if ok, _ := v.Validate("example+test@example.c", &Criteria{}); !ok {
+		t.Errorf("allow more loose")
+	}
+
 }
