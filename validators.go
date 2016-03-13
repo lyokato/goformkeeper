@@ -28,6 +28,27 @@ func (c *Criteria) Has(key string) bool {
 	return found
 }
 
+func (c *Criteria) StringArray(key string) ([]string, error) {
+	value, found := c.values[key]
+	if found {
+		vs, ok := value.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("Couldn't cast to []string '%s'", key)
+		}
+		results := make([]string, len(vs))
+		for i, v := range vs {
+			result, ok := v.(string)
+			if !ok {
+				return nil, fmt.Errorf("Couldn't cast to []string '%s'", key)
+			}
+			results[i] = result
+		}
+		return results, nil
+	} else {
+		return nil, fmt.Errorf("Param not found '%s'", key)
+	}
+}
+
 func (c *Criteria) Bool(key string) (bool, error) {
 	value, found := c.values[key]
 	if found {
@@ -181,6 +202,28 @@ func (v *RuneCountValidator) Validate(value string, criteria *Criteria) (bool, e
 	}
 }
 
+type IncludedValidator struct{}
+
+func (v *IncludedValidator) Validate(value string, criteria *Criteria) (bool, error) {
+	if criteria == nil {
+		return false, errors.New("Criteria for 'included' not enough")
+	}
+	if criteria.Has("in") {
+		params, err := criteria.StringArray("in")
+		if err != nil {
+			return false, err
+		}
+		for _, v := range params {
+			if value == v {
+				return true, nil
+			}
+		}
+		return false, nil
+	} else {
+		return false, errors.New("Criteria for 'included' not enough")
+	}
+}
+
 type LengthValidator struct{}
 
 func (v *LengthValidator) Validate(value string, criteria *Criteria) (bool, error) {
@@ -222,6 +265,7 @@ func init() {
 	AddValidator("url", &URLValidator{})
 	AddValidator("email", &EmailAddressValidator{})
 	AddValidator("loose_email", &LooseEmailAddressValidator{})
+	AddValidator("included", &IncludedValidator{})
 }
 
 func AddValidator(name string, validator Validator) {
