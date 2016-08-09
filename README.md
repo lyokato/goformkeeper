@@ -537,12 +537,12 @@ constraints:
 <label>check3</label>
 ```
 
-このために`selection`というルールが使えます
+このために`selections`というルールが使えます
 
 ```yaml
 forms:
   signin:
-    selection:
+    selections:
       - name: preference
         message: "Check You Preference"
         count:
@@ -562,9 +562,9 @@ forms:
       # ...
 ```
 
-`fields`のルールセットとは別に`selection`というルールセットを定義します。
+`fields`のルールセットとは別に`selections`というルールセットを定義します。
 
-`selection`として定義できるデータ構造は、基本的には`fields`で定義されたフィールド用のルールと同じですが、`required`の代わりに`count`を定義します。
+`selections`として定義できるデータ構造は、基本的には`fields`で定義されたフィールド用のルールと同じですが、`required`の代わりに`count`を定義します。
 
 「このチェックボックスでは、3つチェックされなければならない」というような条件にしたいときは、次のように`eq`を使います。
 

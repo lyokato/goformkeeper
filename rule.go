@@ -187,7 +187,7 @@ func (rule *Rule) Validate(formName string, req *http.Request) (*Result, error) 
 			return nil, errors.New("Selection name not found")
 		}
 		values := req.Form[selection.Name]
-		filteredValues := make([]string, len(values))
+		filteredValues := make([]string, 0)
 		for _, value := range values {
 			filteredValue, err := filter(selection, value)
 			if err != nil {
